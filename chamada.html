@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Chamada</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.listaAluno{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:12px;
+border:1px solid #e5e7eb;
+border-radius:6px;
+cursor:pointer;
+transition:0.2s;
+margin-bottom:6px;
+}
+
+.listaAluno:hover{
+background:#f3f4f6;
+}
+
+.nomeAluno{
+font-weight:bold;
+}
+
+.status{
+font-size:14px;
+font-weight:bold;
+}
+
+.presente{
+background:#dcfce7;
+}
+
+.falta{
+background:#fee2e2;
+}
+
+</style>
+
+</head>
+
+<body>
+
+    <script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Chamada</h1>
+
+<h3>Data</h3>
+<input type="date" id="data">
+
+<h3>Turma</h3>
+
+<select id="serieNumero">
+
+<option value="">Ano</option>
+<option value="6">6°</option>
+<option value="7">7°</option>
+<option value="8">8°</option>
+<option value="9">9°</option>
+<option value="1">1° Médio</option>
+<option value="2">2° Médio</option>
+<option value="3">3° Médio</option>
+
+</select>
+
+<select id="serieLetra">
+
+<option value="">Turma</option>
+<option>A</option>
+<option>B</option>
+<option>C</option>
+<option>D</option>
+<option>E</option>
+
+</select>
+
+<br><br>
+
+<button onclick="carregarAlunos()" class="btn-entrar">
+Carregar alunos
+</button>
+
+<hr>
+
+<div id="lista"></div>
+
+<br><br>
+
+<button onclick="salvarChamada()" class="btn-entrar">
+Salvar registros
+</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+getFirestore,
+collection,
+getDocs,
+addDoc,
+query,
+where,
+updateDoc,
+doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let chamada = {};
+let alunosTurma = [];
+let registrosExistentes = {};
+
+const hoje = new Date().toISOString().split("T")[0];
+document.getElementById("data").value = hoje;
+
+window.carregarAlunos = async function(){
+
+const numero = document.getElementById("serieNumero").value;
+const letra = document.getElementById("serieLetra").value;
+const data = document.getElementById("data").value;
+
+if(numero === "" || letra === ""){
+alert("Selecione a turma");
+return;
+}
+
+const alunosSnap = await getDocs(collection(db,"alunos"));
+
+let alunos = [];
+
+alunosSnap.forEach((doc)=>{
+
+const aluno = doc.data();
+
+if(aluno.serieNumero == numero && aluno.serieLetra == letra){
+
+alunos.push({
+id: doc.id,
+...aluno
+});
+
+}
+
+});
+
+alunos.sort((a,b)=> a.nome.localeCompare(b.nome));
+
+alunosTurma = alunos;
+chamada = {};
+registrosExistentes = {};
+
+const q = query(
+collection(db,"presencas"),
+where("serieNumero","==",numero),
+where("serieLetra","==",letra),
+where("data","==",data)
+);
+
+const presencasSnap = await getDocs(q);
+
+presencasSnap.forEach((docSnap)=>{
+
+const p = docSnap.data();
+
+registrosExistentes[p.alunoId] = {
+docId: docSnap.id,
+status: p.status
+};
+
+});
+
+let html = "";
+
+alunos.forEach((aluno)=>{
+
+let status = "presente";
+
+if(registrosExistentes[aluno.id]){
+status = registrosExistentes[aluno.id].status;
+}
+
+chamada[aluno.id] = status;
+
+let classe = status === "presente" ? "presente" : "falta";
+let texto = status === "presente" ? "Presente" : "Falta";
+
+html += `
+<div class="listaAluno ${classe}" id="linha_${aluno.id}" onclick="marcar('${aluno.id}')">
+
+<div class="nomeAluno">
+${aluno.nome}
+</div>
+
+<div class="status" id="status_${aluno.id}">
+${texto}
+</div>
+
+</div>
+`;
+
+});
+
+document.getElementById("lista").innerHTML = html;
+
+}
+
+window.marcar = function(id){
+
+if(chamada[id] === "presente"){
+
+chamada[id] = "falta";
+
+const linha = document.getElementById("linha_"+id);
+linha.classList.remove("presente");
+linha.classList.add("falta");
+
+document.getElementById("status_"+id).innerText = "Falta";
+
+}else{
+
+chamada[id] = "presente";
+
+const linha = document.getElementById("linha_"+id);
+linha.classList.remove("falta");
+linha.classList.add("presente");
+
+document.getElementById("status_"+id).innerText = "Presente";
+
+}
+
+}
+
+window.salvarChamada = async function(){
+
+const data = document.getElementById("data").value;
+const numero = document.getElementById("serieNumero").value;
+const letra = document.getElementById("serieLetra").value;
+
+if(!data){
+alert("Selecione a data");
+return;
+}
+
+if(alunosTurma.length === 0){
+alert("Carregue a turma primeiro");
+return;
+}
+
+for(const aluno of alunosTurma){
+
+const status = chamada[aluno.id];
+
+if(registrosExistentes[aluno.id]){
+
+await updateDoc(
+doc(db,"presencas",registrosExistentes[aluno.id].docId),
+{status:status}
+);
+
+}else{
+
+await addDoc(collection(db,"presencas"),{
+
+alunoId: aluno.id,
+nome: aluno.nome,
+serieNumero: numero,
+serieLetra: letra,
+data: data,
+status: status
+
+});
+
+}
+
+}
+
+alert("Chamada salva com sucesso");
+
+document.getElementById("lista").innerHTML = "";
+
+document.getElementById("serieNumero").value = "";
+document.getElementById("serieLetra").value = "";
+
+chamada = {};
+alunosTurma = [];
+registrosExistentes = {};
+
+}
+
+</script>
+
+<div class="credito">By Jorge La Grassi</div>
+
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Busca Ativa</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.alunoCard{
+border:1px solid #e5e7eb;
+border-radius:8px;
+padding:12px;
+margin-bottom:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.nomeAluno{
+font-weight:bold;
+font-size:16px;
+}
+
+.infoAluno{
+font-size:13px;
+color:#555;
+}
+
+.diasFalta{
+font-size:13px;
+margin-top:4px;
+color:#444;
+}
+
+.faltas{
+font-size:14px;
+color:#b91c1c;
+font-weight:bold;
+margin-top:4px;
+}
+
+.situacao{
+font-size:13px;
+margin-top:4px;
+font-weight:bold;
+}
+
+.botaoWhats{
+background:#16a34a;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.alertaHoje{
+color:#dc2626;
+font-size:13px;
+font-weight:bold;
+margin-top:4px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Busca Ativa</h1>
+
+<h3>Filtrar por série (opcional)</h3>
+
+<select id="serieNumero">
+<option value="">Todas</option>
+<option value="6">6°</option>
+<option value="7">7°</option>
+<option value="8">8°</option>
+<option value="9">9°</option>
+<option value="1">1° Médio</option>
+<option value="2">2° Médio</option>
+<option value="3">3° Médio</option>
+</select>
+
+<select id="serieLetra">
+<option value="">Turma</option>
+<option>A</option>
+<option>B</option>
+<option>C</option>
+<option>D</option>
+<option>E</option>
+</select>
+
+<br><br>
+
+<h3>Período</h3>
+
+<label>Data início</label>
+<input type="date" id="dataInicio">
+
+<label>Data fim</label>
+<input type="date" id="dataFim">
+
+<br><br>
+
+<button onclick="buscar()" class="btn-entrar">
+Buscar faltas
+</button>
+
+<hr>
+<div class="legendaFarol">
+
+    <b>Legenda de frequência anual:</b><br>
+    
+    <span style="color:#15803d;font-weight:bold;">
+    🟢 OK
+    </span>
+    até 10% de faltas
+    
+    &nbsp;&nbsp;
+    
+    <span style="color:#ca8a04;font-weight:bold;">
+    🟡 Atenção
+    </span>
+    10% – 17%
+    
+    &nbsp;&nbsp;
+    
+    <span style="color:#ea580c;font-weight:bold;">
+    🟠 Risco
+    </span>
+    18% – 24%
+    
+    &nbsp;&nbsp;
+    
+    <span style="color:#b91c1c;font-weight:bold;">
+    🔴 Reprovado
+    </span>
+    25% ou mais
+    
+    </div>
+    
+    <br>
+<h2>🚨 Faltas consecutivas</h2>
+<div id="consecutivas"></div>
+
+<h2>⚠ Faltas no período</h2>
+<div id="periodo"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.buscar = async function(){
+
+const inicio = document.getElementById("dataInicio").value;
+const fim = document.getElementById("dataFim").value;
+
+const serieNumero = document.getElementById("serieNumero").value;
+const serieLetra = document.getElementById("serieLetra").value;
+
+if(!inicio || !fim){
+alert("Selecione o período");
+return;
+}
+
+const presencasSnap = await getDocs(collection(db,"presencas"));
+const alunosSnap = await getDocs(collection(db,"alunos"));
+
+let alunos = {};
+
+alunosSnap.forEach((doc)=>{
+
+const a = doc.data();
+
+alunos[doc.id] = {
+nome: a.nome,
+serieNumero: a.serieNumero,
+serieLetra: a.serieLetra,
+serie: a.serieNumero + "° " + a.serieLetra,
+tel: a.tel1 || a.tel2 || a.tel3 || a.tel4 || ""
+};
+
+});
+
+let dados = {};
+let faltasAno = {};
+
+presencasSnap.forEach((doc)=>{
+
+const p = doc.data();
+
+if(p.status === "falta"){
+
+if(!faltasAno[p.alunoId]) faltasAno[p.alunoId] = 0;
+faltasAno[p.alunoId]++;
+
+}
+
+if(p.data >= inicio && p.data <= fim){
+
+const alunoInfo = alunos[p.alunoId];
+if(!alunoInfo) return;
+
+if(serieNumero && alunoInfo.serieNumero != serieNumero) return;
+if(serieLetra && alunoInfo.serieLetra != serieLetra) return;
+
+if(!dados[p.alunoId]){
+
+dados[p.alunoId] = {
+nome: alunoInfo.nome,
+serie: alunoInfo.serie,
+tel: alunoInfo.tel,
+faltas:[]
+};
+
+}
+
+if(p.status === "falta"){
+dados[p.alunoId].faltas.push(p.data);
+}
+
+}
+
+});
+
+let consecutivas = [];
+let periodo = [];
+
+Object.keys(dados).forEach(id=>{
+
+const aluno = dados[id];
+
+if(aluno.faltas.length < 1) return;
+
+const faltasOrdenadas = aluno.faltas.sort((a,b)=> new Date(a) - new Date(b));
+
+let atual = 1;
+let maior = 1;
+
+for(let i=1;i<faltasOrdenadas.length;i++){
+
+const d1 = new Date(faltasOrdenadas[i-1]);
+const d2 = new Date(faltasOrdenadas[i]);
+
+const diff = (d2-d1)/(1000*60*60*24);
+
+if(diff === 1){
+atual++;
+if(atual > maior) maior = atual;
+}else{
+atual = 1;
+}
+
+}
+
+aluno.total = aluno.faltas.length;
+aluno.consecutivas = maior;
+aluno.totalAno = faltasAno[id] || 0;
+
+if(maior >= 2){
+consecutivas.push(aluno);
+}else{
+periodo.push(aluno);
+}
+
+});
+
+consecutivas.sort((a,b)=> b.consecutivas - a.consecutivas || b.total - a.total);
+periodo.sort((a,b)=> b.total - a.total);
+
+let html1 = "";
+let html2 = "";
+
+consecutivas.forEach(aluno=>{
+html1 += card(aluno);
+});
+
+periodo.forEach(aluno=>{
+html2 += card(aluno);
+});
+
+document.getElementById("consecutivas").innerHTML = html1;
+document.getElementById("periodo").innerHTML = html2;
+
+}
+
+function card(aluno){
+
+let dias = aluno.faltas
+.map(d => new Date(d).getDate())
+.sort((a,b)=>a-b)
+.join(" • ");
+
+let textoFaltas = aluno.consecutivas >= 2
+? aluno.consecutivas + " faltas consecutivas"
+: aluno.total + " faltas no período";
+
+let frequencia = calcularSituacao(aluno.totalAno);
+
+const hoje = new Date().getDate();
+let faltouHoje = aluno.faltas.some(d => new Date(d).getDate() === hoje);
+
+return `
+<div class="alunoCard">
+
+<div>
+
+<div class="nomeAluno">${aluno.nome}</div>
+
+<div class="infoAluno">
+${aluno.serie}
+</div>
+
+<div class="diasFalta">
+Faltou nos dias: ${dias}
+</div>
+
+<div class="faltas">
+${textoFaltas}
+</div>
+
+${faltouHoje ? `<div class="alertaHoje">🔥 Faltou hoje</div>` : ""}
+
+<div class="situacao" style="color:${frequencia.cor}">
+${frequencia.texto}
+</div>
+
+</div>
+
+<button class="botaoWhats"
+onclick="abrirWhatsapp('${aluno.tel}','${aluno.nome}','${aluno.serie}')">
+
+WhatsApp
+
+</button>
+
+</div>
+`;
+
+}
+
+function calcularSituacao(faltas){
+
+let percentualFalta = (faltas / 200) * 100;
+let percentualPresenca = 100 - percentualFalta;
+
+if(faltas <= 20){
+return {texto:`🟢 OK — ${percentualPresenca.toFixed(1)}% presença`,cor:"#15803d"};
+}
+
+if(faltas <= 35){
+return {texto:`🟡 Atenção — ${percentualPresenca.toFixed(1)}% presença`,cor:"#ca8a04"};
+}
+
+if(faltas <= 49){
+return {texto:`🟠 Risco de reprovação — ${percentualPresenca.toFixed(1)}% presença`,cor:"#ea580c"};
+}
+
+return {texto:`🔴 Reprovado por frequência`,cor:"#b91c1c"};
+
+}
+
+window.abrirWhatsapp = function(numero,nome,serie){
+
+numero = numero.replace(/\D/g,'');
+
+if(numero === ""){
+alert("Telefone não cadastrado");
+return;
+}
+
+let mensagem =
+"Olá, aqui é da Escola Dinah de Moraes e Seixas. Estamos entrando em contato sobre o aluno(a) "+nome+" da turma "+serie+" devido a faltas recentes.";
+
+mensagem = encodeURIComponent(mensagem);
+
+window.open("https://wa.me/55"+numero+"?text="+mensagem,"_blank");
+
+}
+
+</script>
+
+<div class="credito">By Jorge La Grassi</div>
+
+</body>
+</html>

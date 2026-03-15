@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ficha do Aluno</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Ficha do Aluno</h1>
+
+<div id="fichaAluno"></div>
+
+<br>
+
+<button onclick="salvarAlteracao()" class="btn-entrar">
+Salvar alteração
+</button>
+
+<button onclick="excluirAluno()" class="btnExcluir">
+Excluir aluno
+</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const parametros = new URLSearchParams(window.location.search);
+const id = parametros.get("id");
+
+async function carregarAluno(){
+
+const docRef = doc(db,"alunos",id);
+const docSnap = await getDoc(docRef);
+
+if(docSnap.exists()){
+
+const aluno = docSnap.data();
+
+let html = `
+
+<div class="layoutFicha">
+
+<div class="fotoAluno">
+<img src="${aluno.foto}" class="fotoFicha">
+</div>
+
+<div class="dadosAluno">
+
+<strong>Nome</strong><br>
+<input id="nome" value="${aluno.nome}">
+
+<strong>RA</strong><br>
+<input id="ra" value="${aluno.ra}">
+
+<strong>Série</strong>
+<div class="campoSerie">
+<input id="serieNumero" value="${aluno.serieNumero}">
+<input id="serieLetra" value="${aluno.serieLetra}">
+</div>
+
+</div>
+
+</div>
+
+<br>
+
+<strong>Responsável 1</strong><br>
+
+<div class="linhaResponsavel">
+
+<input id="resp1" value="${aluno.resp1}">
+<input id="tel1" value="${aluno.tel1}" oninput="mascaraTelefone(this)" class="campoTelefone">
+
+<img src="whatsapp.png"
+class="iconeWhats"
+onclick="abrirWhatsapp(document.getElementById('tel1').value, document.getElementById('nome').value)">
+
+</div>
+
+<strong>Responsável 2</strong><br>
+
+<div class="linhaResponsavel">
+
+<input id="resp2" value="${aluno.resp2}">
+<input id="tel2" value="${aluno.tel2}" oninput="mascaraTelefone(this)" class="campoTelefone">
+
+<img src="whatsapp.png"
+class="iconeWhats"
+onclick="abrirWhatsapp(document.getElementById('tel2').value, document.getElementById('nome').value)">
+
+</div>
+
+
+
+<br>
+
+<strong>Observações</strong><br>
+<textarea id="obs">${aluno.observacoes}</textarea>
+
+`;
+
+document.getElementById("fichaAluno").innerHTML = html;
+
+}
+
+}
+
+async function salvarAlteracao(){
+
+const docRef = doc(db,"alunos",id);
+
+await updateDoc(docRef,{
+
+nome: document.getElementById("nome").value,
+ra: document.getElementById("ra").value,
+
+serieNumero: document.getElementById("serieNumero").value,
+serieLetra: document.getElementById("serieLetra").value,
+
+resp1: document.getElementById("resp1").value,
+tel1: document.getElementById("tel1").value,
+
+resp2: document.getElementById("resp2").value,
+tel2: document.getElementById("tel2").value,
+
+resp3: document.getElementById("resp3").value,
+tel3: document.getElementById("tel3").value,
+
+resp4: document.getElementById("resp4").value,
+tel4: document.getElementById("tel4").value,
+
+observacoes: document.getElementById("obs").value
+
+});
+
+alert("Alterações salvas");
+
+}
+
+async function excluirAluno(){
+
+if(confirm("Deseja excluir este aluno?")){
+
+await deleteDoc(doc(db,"alunos",id));
+
+alert("Aluno excluído");
+
+window.location = "pesquisa.html";
+
+}
+
+}
+
+window.salvarAlteracao = salvarAlteracao;
+window.excluirAluno = excluirAluno;
+
+carregarAluno();
+
+/* CONTROLE DE PERMISSÃO */
+
+const modo = localStorage.getItem("modo");
+
+if(modo !== "admin"){
+
+document.querySelectorAll("input, textarea").forEach(campo=>{
+campo.disabled = true;
+});
+
+const btnSalvar = document.querySelector(".btn-entrar");
+if(btnSalvar) btnSalvar.style.display="none";
+
+const btnExcluir = document.querySelector(".btnExcluir");
+if(btnExcluir) btnExcluir.style.display="none";
+
+}
+
+</script>
+
+<script>
+
+function mascaraTelefone(input){
+
+let valor = input.value.replace(/\D/g,'');
+
+if(valor.length > 11){
+valor = valor.slice(0,11);
+}
+
+valor = valor.replace(/^(\d{2})(\d)/g,"($1) $2");
+valor = valor.replace(/(\d{5})(\d)/,"$1-$2");
+
+input.value = valor;
+
+}
+
+function abrirWhatsapp(numero,nome){
+
+numero = numero.replace(/\D/g,'');
+
+if(numero === ""){
+alert("Telefone não cadastrado");
+return;
+}
+
+let mensagem = "Olá, aqui é da Escola Dinah de Moraes e Seixas, estamos entrando em contato sobre o Aluno(a) " + nome;
+
+mensagem = encodeURIComponent(mensagem);
+
+window.open("https://wa.me/55"+numero+"?text="+mensagem,"_blank");
+
+}
+
+</script>
+
+<div class="credito">By Jorge La Grassi</div>
+
+</body>
+</html>

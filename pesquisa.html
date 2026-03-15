@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Pesquisa de Alunos</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Pesquisar alunos</h1>
+
+<h3>Pesquisar por nome</h3>
+
+<input
+type="text"
+id="buscaNome"
+placeholder="Digite o nome do aluno"
+onkeyup="buscarPorNome()"
+>
+
+<br><br>
+
+<h3>Pesquisar por série</h3>
+
+<select id="serieNumero">
+<option value="">Ano</option>
+<option value="6">6°</option>
+<option value="7">7°</option>
+<option value="8">8°</option>
+<option value="9">9°</option>
+<option value="1">1° Médio</option>
+<option value="2">2° Médio</option>
+<option value="3">3° Médio</option>
+</select>
+
+<select id="serieLetra">
+<option value="">Turma</option>
+<option>A</option>
+<option>B</option>
+<option>C</option>
+<option>D</option>
+<option>E</option>
+</select>
+
+<br><br>
+
+<button onclick="buscarPorSerie()" class="btn-confirm">Buscar série</button>
+
+<br><br>
+
+<div id="resultado"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function buscarPorNome(){
+
+const texto = document.getElementById("buscaNome").value.toLowerCase();
+
+const querySnapshot = await getDocs(collection(db,"alunos"));
+
+let html = "";
+
+querySnapshot.forEach((doc) => {
+
+const aluno = doc.data();
+
+if(aluno.nome.toLowerCase().includes(texto)){
+
+html += `
+<div class="impressaoCard">
+
+    <img src="${aluno.foto}">
+
+    <div class="dadosAluno">
+        <strong>${aluno.nome}</strong><br>
+        Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
+        RA: ${aluno.ra}
+
+        <br>
+        <button onclick="verFicha('${doc.id}')" class="btn-entrar">
+        Ver ficha completa
+        </button>
+
+    </div>
+
+</div>
+`;
+
+}
+
+});
+
+document.getElementById("resultado").innerHTML = html;
+
+}
+
+async function buscarPorSerie(){
+
+const numero = document.getElementById("serieNumero").value;
+const letra = document.getElementById("serieLetra").value;
+
+const querySnapshot = await getDocs(collection(db,"alunos"));
+
+let html = "";
+
+querySnapshot.forEach((doc) => {
+
+const aluno = doc.data();
+
+if(aluno.serieNumero == numero && aluno.serieLetra == letra){
+
+html += `
+<div class="impressaoCard">
+
+<img src="${aluno.foto}">
+
+<div class="dadosAluno">
+
+<strong>${aluno.nome}</strong><br>
+Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
+RA: ${aluno.ra}
+
+<br><br>
+
+<button onclick="verFicha('${doc.id}')">
+Ver ficha completa
+</button>
+
+</div>
+
+</div>
+`;
+
+}
+
+});
+
+document.getElementById("resultado").innerHTML = html;
+
+}
+
+window.buscarPorNome = buscarPorNome;
+window.buscarPorSerie = buscarPorSerie;
+
+window.verFicha = function(id){
+
+window.location = "ficha.html?id=" + id;
+
+}
+
+</script>
+
+<div class="credito">By Jorge La Grassi</div>
+
+</body>
+</html>

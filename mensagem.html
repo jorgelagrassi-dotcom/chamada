@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Envio de mensagens</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+    <script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Envio de mensagem em massa</h1>
+
+<h3>Tipo de envio</h3>
+
+<select id="tipoEnvio">
+
+<option value="">Selecione</option>
+<option value="turma">Turma específica</option>
+<option value="fundamental">Ensino Fundamental (6° ao 9°)</option>
+<option value="medio">Ensino Médio (1° ao 3°)</option>
+<option value="todos">Escola inteira</option>
+
+</select>
+
+<br><br>
+
+<div id="campoTurma" style="display:none;">
+
+<h3>Turma</h3>
+
+<select id="serieNumero">
+
+<option value="">Ano</option>
+<option value="6">6°</option>
+<option value="7">7°</option>
+<option value="8">8°</option>
+<option value="9">9°</option>
+<option value="1">1° Médio</option>
+<option value="2">2° Médio</option>
+<option value="3">3° Médio</option>
+
+</select>
+
+<select id="serieLetra">
+
+<option value="">Turma</option>
+<option>A</option>
+<option>B</option>
+<option>C</option>
+<option>D</option>
+<option>E</option>
+
+</select>
+
+</div>
+
+<br>
+
+<h3>Mensagem</h3>
+
+<textarea id="mensagem" placeholder="Ex: Olá responsável pelo aluno {nome} da turma {serie}."></textarea>
+
+<br><br>
+
+<button onclick="enviarMensagem()" class="btn-entrar">
+Preparar envio no WhatsApp
+</button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const tipoEnvio = document.getElementById("tipoEnvio");
+const campoTurma = document.getElementById("campoTurma");
+
+tipoEnvio.addEventListener("change",()=>{
+
+if(tipoEnvio.value === "turma"){
+campoTurma.style.display = "block";
+}else{
+campoTurma.style.display = "none";
+}
+
+});
+
+window.enviarMensagem = async function(){
+
+const mensagemTexto = document.getElementById("mensagem").value;
+
+if(mensagemTexto === ""){
+alert("Digite uma mensagem");
+return;
+}
+
+const querySnapshot = await getDocs(collection(db,"alunos"));
+
+let telefones = [];
+
+querySnapshot.forEach((doc)=>{
+
+const aluno = doc.data();
+
+let incluir = false;
+
+if(tipoEnvio.value === "todos"){
+incluir = true;
+}
+
+if(tipoEnvio.value === "fundamental"){
+if(aluno.serieNumero >= 6 && aluno.serieNumero <= 9){
+incluir = true;
+}
+}
+
+if(tipoEnvio.value === "medio"){
+if(aluno.serieNumero >= 1 && aluno.serieNumero <= 3){
+incluir = true;
+}
+}
+
+if(tipoEnvio.value === "turma"){
+
+const numero = document.getElementById("serieNumero").value;
+const letra = document.getElementById("serieLetra").value;
+
+if(aluno.serieNumero == numero && aluno.serieLetra == letra){
+incluir = true;
+}
+
+}
+
+if(incluir){
+
+let mensagemPersonalizada = mensagemTexto
+.replace("{nome}", aluno.nome)
+.replace("{serie}", aluno.serieNumero + "° " + aluno.serieLetra);
+
+const mensagem = encodeURIComponent(mensagemPersonalizada);
+
+[aluno.tel1, aluno.tel2, aluno.tel3, aluno.tel4].forEach(tel=>{
+
+if(tel){
+
+tel = tel.replace(/\D/g,'');
+
+if(tel.length >= 10){
+
+telefones.push({
+numero: tel,
+mensagem: mensagem
+});
+
+}
+
+}
+
+});
+
+}
+
+});
+
+if(telefones.length === 0){
+alert("Nenhum telefone encontrado");
+return;
+}
+
+telefones = [...new Map(telefones.map(t => [t.numero, t])).values()];
+
+telefones.forEach(contato=>{
+
+const link = "https://wa.me/55"+contato.numero+"?text="+contato.mensagem;
+
+window.open(link,"_blank");
+
+});
+
+}
+
+</script>
+
+<div class="credito">By Jorge La Grassi</div>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+        
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Login Administrador</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Área do Administrador</h1>
+
+<input type="password" id="senha" placeholder="Digite a senha de administrador">
+
+<br><br>
+
+<button onclick="login()" class="btn-entrar">
+Entrar
+</button>
+
+<p id="erro" style="color:red;"></p>
+
+</div>
+
+<script>
+
+    const senhaCorreta = "Dinahadm26";
+    
+    function login(){
+    
+    const senha = document.getElementById("senha").value;
+    
+    if(senha === senhaCorreta){
+    
+    localStorage.setItem("modo","admin");
+    
+    window.location = "pesquisa.html";
+    
+    }else{
+    
+    document.getElementById("erro").innerText = "Senha incorreta";
+    
+    }
+    
+    }
+    
+    </script>
+<div class="credito">By Jorge La Grassi</div>
+</body>
+</html>
