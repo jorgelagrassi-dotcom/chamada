@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar Alunos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<script src="menu.js"></script>
+
+<div class="container">
+
+<h1>Importar alunos (CSV)</h1>
+
+<input type="file" id="arquivo" accept=".csv">
+
+<br><br>
+
+<button onclick="lerArquivo()" class="btn-entrar">
+Carregar arquivo
+</button>
+
+<button onclick="importar()" class="btn-entrar">
+Importar para o sistema
+</button>
+
+<br><br>
+
+<div id="preview"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let dados = [];
+
+/* =========================
+LER CSV
+========================= */
+
+window.lerArquivo = function(){
+
+const file = document.getElementById("arquivo").files[0];
+
+if(!file){
+alert("Selecione um arquivo CSV");
+return;
+}
+
+const reader = new FileReader();
+
+reader.onload = function(e){
+
+const texto = e.target.result;
+
+// remove linhas vazias
+const linhas = texto.split("\n").filter(l => l.trim() !== "");
+
+dados = [];
+
+for(let i = 1; i < linhas.length; i++){
+
+const col = linhas[i].split(";");
+
+dados.push({
+nome: col[0]?.toUpperCase() || "",
+ra: col[1]?.toUpperCase() || "",
+aniversario: col[2] || "",
+serieNumero: col[3] || "",
+serieLetra: col[4] || "",
+resp1: col[5]?.toUpperCase() || "",
+tel1: col[6] || "",
+resp2: col[7]?.toUpperCase() || "",
+tel2: col[8] || "",
+observacoes: col[9]?.toUpperCase() || ""
+});
+
+}
+
+mostrarPreview();
+
+};
+
+reader.readAsText(file);
+
+}
+
+/* =========================
+PREVIEW
+========================= */
+
+function mostrarPreview(){
+
+let html = "<table class='tabela'>";
+html += "<tr><th>Nome</th><th>RA</th><th>Série</th><th>Observações</th></tr>";
+
+dados.forEach(a=>{
+html += `<tr>
+<td>${a.nome}</td>
+<td>${a.ra}</td>
+<td>${a.serieNumero} ${a.serieLetra}</td>
+<td>${a.observacoes}</td>
+</tr>`;
+});
+
+html += "</table>";
+
+document.getElementById("preview").innerHTML = html;
+
+}
+
+/* =========================
+IMPORTAR
+========================= */
+
+window.importar = async function(){
+
+if(dados.length === 0){
+alert("Carregue o arquivo primeiro");
+return;
+}
+
+if(!confirm("Deseja importar todos os alunos?")){
+return;
+}
+
+for(const aluno of dados){
+await addDoc(collection(db,"alunos"),aluno);
+}
+
+alert("Importação concluída!");
+
+dados = [];
+document.getElementById("preview").innerHTML = "";
+
+}
+
+</script>
+
+</body>
+</html>

@@ -32,37 +32,42 @@ onkeyup="buscarPorNome()"
 <br><br>
 
 <h3>Pesquisar por série</h3>
+
 <select id="serieNumero">
-
 <option value="">Todas</option>
-
 <option value="6">6º Ano</option>
 <option value="7">7º Ano</option>
 <option value="8">8º Ano</option>
 <option value="9">9º Ano</option>
-
 <option value="1">1º Médio</option>
 <option value="2">2º Médio</option>
 <option value="3">3º Médio</option>
-
 </select>
 
 <select id="serieLetra">
-
 <option value="">Turma</option>
-
 <option value="A">A</option>
 <option value="B">B</option>
 <option value="C">C</option>
 <option value="D">D</option>
 <option value="E">E</option>
-
 </select>
 
 <br><br>
 
 <button onclick="buscarPorSerie()" class="btn-confirm">
 Buscar série
+</button>
+
+<br><br>
+
+<!-- 🔒 BOTÕES ADMIN -->
+<button id="btnLimparTurma" onclick="limparTurma()" style="background:red;color:white;padding:10px;border:none;border-radius:5px;">
+🗑️ Limpar turma
+</button>
+
+<button id="btnRemoverBaixa" onclick="removerTransferidos()" style="background:orange;color:white;padding:10px;border:none;border-radius:5px;">
+Remover baixa transferência
 </button>
 
 <br><br>
@@ -74,7 +79,14 @@ Buscar série
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { 
+getFirestore, 
+collection, 
+getDocs, 
+deleteDoc, 
+doc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
@@ -87,6 +99,97 @@ appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+/* =========================
+CONTROLE DE ACESSO
+========================= */
+
+const modo = localStorage.getItem("modo");
+
+if(modo !== "admin"){
+document.getElementById("btnLimparTurma").style.display = "none";
+document.getElementById("btnRemoverBaixa").style.display = "none";
+}
+
+/* =========================
+REMOVER TRANSFERIDOS
+========================= */
+
+window.removerTransferidos = async function(){
+
+if(modo !== "admin"){
+alert("Apenas administradores podem executar essa ação");
+return;
+}
+
+const querySnapshot = await getDocs(collection(db,"alunos"));
+
+let total = 0;
+
+for (const documento of querySnapshot.docs){
+
+const aluno = documento.data();
+
+if(aluno.observacoes && aluno.observacoes.includes("BAIXA")){
+
+await deleteDoc(doc(db,"alunos",documento.id));
+total++;
+
+}
+
+}
+
+alert(total + " alunos removidos");
+
+}
+
+/* =========================
+LIMPAR TURMA
+========================= */
+
+window.limparTurma = async function(){
+
+if(modo !== "admin"){
+alert("Apenas administradores podem executar essa ação");
+return;
+}
+
+const numero = document.getElementById("serieNumero").value;
+const letra = document.getElementById("serieLetra").value;
+
+if(!numero || !letra){
+alert("Selecione a série e turma");
+return;
+}
+
+if(!confirm("Tem certeza que deseja apagar essa turma inteira?")){
+return;
+}
+
+const querySnapshot = await getDocs(collection(db,"alunos"));
+
+let total = 0;
+
+for (const documento of querySnapshot.docs){
+
+const aluno = documento.data();
+
+if(aluno.serieNumero == numero && aluno.serieLetra == letra){
+
+await deleteDoc(doc(db,"alunos",documento.id));
+total++;
+
+}
+
+}
+
+alert("Turma apagada: " + total + " alunos removidos");
+
+}
+
+/* =========================
+BUSCAR POR NOME
+========================= */
 
 async function buscarPorNome(){
 
@@ -105,19 +208,20 @@ if(aluno.nome.toLowerCase().includes(texto)){
 html += `
 <div class="impressaoCard">
 
-    <img src="${aluno.foto || 'semfoto.png'}">
+<img src="${aluno.foto || 'avatar.png'}" onerror="this.src='avatar.png'">
 
-    <div class="dadosAluno">
-        <strong>${aluno.nome}</strong><br>
-        Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
-        RA: ${aluno.ra}
+<div class="dadosAluno">
+<strong>${aluno.nome}</strong><br>
+Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
+RA: ${aluno.ra}
 
-        <br>
-        <button onclick="verFicha('${doc.id}')" class="btn-entrar">
-        Ver ficha completa
-        </button>
+<br>
 
-    </div>
+<button onclick="verFicha('${doc.id}')" class="btn-entrar">
+Ver ficha completa
+</button>
+
+</div>
 
 </div>
 `;
@@ -129,6 +233,10 @@ html += `
 document.getElementById("resultado").innerHTML = html;
 
 }
+
+/* =========================
+BUSCAR POR SÉRIE
+========================= */
 
 async function buscarPorSerie(){
 
@@ -148,7 +256,7 @@ if(aluno.serieNumero == numero && aluno.serieLetra == letra){
 html += `
 <div class="impressaoCard">
 
-<img src="${aluno.foto || 'semfoto.png'}">
+<img src="${aluno.foto || 'avatar.png'}" onerror="this.src='avatar.png'">
 
 <div class="dadosAluno">
 
