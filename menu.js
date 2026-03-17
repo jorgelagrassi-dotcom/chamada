@@ -1,63 +1,70 @@
+// =========================
+// CONTROLE DE PERMISSÃO
+// =========================
+
 const modo = localStorage.getItem("modo");
 
-let menu = `
-<div class="navbar">
+window.isAdmin = function(){
+return modo === "admin";
+}
 
-<button onclick="window.location='index.html'">
-INICIO
-</button>
+// =========================
+// NAVBAR
+// =========================
+
+const navbar = document.createElement("div");
+navbar.className = "navbar";
+
+navbar.innerHTML = `
 
 <button onclick="window.location='pesquisa.html'">
-PESQUISA
+Pesquisar
 </button>
-`;
-
-if(modo === "admin"){
-
-menu += `
-
-<button onclick="window.location='cadastro.html'">
-CADASTRO
-</button>
-
-<button onclick="window.location='chamada.html'">
-CHAMADA
-</button>
-
-<button onclick="window.location='buscaativa.html'">
-BUSCA ATIVA
-</button>
-
-
 
 <button onclick="window.location='relatorio.html'">
-RELATÓRIO
+Relatório
+</button>
+
+<button class="btnAdmin" onclick="window.location='cadastro.html'">
+Cadastrar aluno
+</button>
+
+<button class="btnAdmin" onclick="window.location='chamada.html'">
+Chamada
+</button>
+
+<button class="btnAdmin" onclick="window.location='buscaativa.html'">
+Busca ativa
+</button>
+
+<button onclick="sair()">
+Sair
 </button>
 
 `;
+
+document.body.prepend(navbar);
+
+// =========================
+// ESCONDER BOTÕES ADMIN
+// =========================
+
+if(!isAdmin()){
+
+document.querySelectorAll(".btnAdmin").forEach(btn=>{
+btn.style.display="none";
+});
 
 }
 
-menu += `</div>`;
+// =========================
+// SAIR
+// =========================
 
-document.write(menu);
+window.sair = function(){
 
-/* BLOQUEAR PÁGINAS RESTRITAS */
+localStorage.removeItem("modo");
 
-const paginasRestritas = [
-"cadastro.html",
-"chamada.html",
-"buscaativa.html",
-"mensagem.html",
-"relatorio.html"
-];
-
-const paginaAtual = window.location.pathname.split("/").pop();
-
-if(modo !== "admin" && paginasRestritas.includes(paginaAtual)){
-
-alert("Acesso permitido apenas para administradores");
-
-window.location = "pesquisa.html";
+window.location = "index.html";
 
 }

@@ -17,6 +17,7 @@
 <script src="menu.js"></script>
 
 <div class="container">
+
 <h1>Cadastro de Aluno</h1>
 
 <h3>Foto do aluno</h3>
@@ -28,26 +29,36 @@
 
 <input id="ra" placeholder="RA">
 
+<h3>Data de aniversário</h3>
+<input type="date" id="aniversario">
+
 <h3>Série</h3>
 
 <select id="serieNumero">
+
 <option value="">Ano</option>
-<option value="6">6°</option>
-<option value="7">7°</option>
-<option value="8">8°</option>
-<option value="9">9°</option>
-<option value="1">1° Médio</option>
-<option value="2">2° Médio</option>
-<option value="3">3° Médio</option>
+
+<option value="6">6º Ano</option>
+<option value="7">7º Ano</option>
+<option value="8">8º Ano</option>
+<option value="9">9º Ano</option>
+
+<option value="1">1º Médio</option>
+<option value="2">2º Médio</option>
+<option value="3">3º Médio</option>
+
 </select>
 
 <select id="serieLetra">
+
 <option value="">Turma</option>
-<option>A</option>
-<option>B</option>
-<option>C</option>
-<option>D</option>
-<option>E</option>
+
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="E">E</option>
+
 </select>
 
 <h3>Responsáveis</h3>
@@ -58,8 +69,6 @@
 <input id="resp2" placeholder="Responsável 2">
 <input id="tel2" placeholder="Telefone" oninput="mascaraTelefone(this)">
 
-
-
 <h3>Observações</h3>
 
 <textarea id="obs" placeholder="Observações"></textarea>
@@ -67,46 +76,40 @@
 <br><br>
 
 <button onclick="salvarAluno()" class="btn-entrar">
-    Salvar aluno
-    </button>
-    
-    </div>
-    
-    <script type="module" src="firebase.js"></script>
-    
-    <script>
-    
-    /* ===== CONTROLE DE PERMISSÃO ===== */
-    
-    const modo = localStorage.getItem("modo");
-    
-    if(modo !== "admin"){
-    alert("Apenas administradores podem cadastrar alunos");
-    window.location = "pesquisa.html";
-    }
-    
+Salvar aluno
+</button>
 
-/* ===== MÁSCARA TELEFONE ===== */
+</div>
 
-function mascaraTelefone(input){
+<script type="module">
 
-let valor = input.value.replace(/\D/g,'');
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-if(valor.length > 11){
-valor = valor.slice(0,11);
+const firebaseConfig = {
+apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+authDomain: "alunos-escola-35433.firebaseapp.com",
+projectId: "alunos-escola-35433",
+storageBucket: "alunos-escola-35433.firebasestorage.app",
+messagingSenderId: "682522156619",
+appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const modo = localStorage.getItem("modo");
+
+/* =========================
+SALVAR ALUNO
+========================= */
+
+window.salvarAluno = function(){
+
+if(modo !== "admin"){
+alert("Apenas administradores podem cadastrar alunos");
+return;
 }
-
-valor = valor.replace(/^(\d{2})(\d)/g,"($1) $2");
-
-valor = valor.replace(/(\d{5})(\d)/,"$1-$2");
-
-input.value = valor;
-
-}
-
-/* ===== SALVAR ALUNO ===== */
-
-function salvarAluno(){
 
 const arquivo = document.getElementById("foto").files[0];
 
@@ -122,7 +125,7 @@ leitor.onload = function(event){
 const img = new Image();
 img.src = event.target.result;
 
-img.onload = function(){
+img.onload = async function(){
 
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
@@ -148,6 +151,7 @@ const dados = {
 
 nome: document.getElementById("nome").value,
 ra: document.getElementById("ra").value,
+aniversario: document.getElementById("aniversario").value,
 
 serieNumero: document.getElementById("serieNumero").value,
 serieLetra: document.getElementById("serieLetra").value,
@@ -158,25 +162,46 @@ tel1: document.getElementById("tel1").value,
 resp2: document.getElementById("resp2").value,
 tel2: document.getElementById("tel2").value,
 
-resp3: document.getElementById("resp3").value,
-tel3: document.getElementById("tel3").value,
-
-resp4: document.getElementById("resp4").value,
-tel4: document.getElementById("tel4").value,
-
 observacoes: document.getElementById("obs").value,
 
 foto: fotoBase64
 
 };
 
-window.cadastrarAluno(dados);
+await addDoc(collection(db,"alunos"),dados);
+
+alert("Aluno cadastrado com sucesso");
+
+window.location = "pesquisa.html";
 
 }
 
 }
 
 leitor.readAsDataURL(arquivo);
+
+}
+
+</script>
+
+<script>
+
+/* =========================
+MÁSCARA TELEFONE
+========================= */
+
+function mascaraTelefone(input){
+
+let valor = input.value.replace(/\D/g,'');
+
+if(valor.length > 11){
+valor = valor.slice(0,11);
+}
+
+valor = valor.replace(/^(\d{2})(\d)/g,"($1) $2");
+valor = valor.replace(/(\d{5})(\d)/,"$1-$2");
+
+input.value = valor;
 
 }
 

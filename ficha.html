@@ -54,6 +54,12 @@ const db = getFirestore(app);
 const parametros = new URLSearchParams(window.location.search);
 const id = parametros.get("id");
 
+const modo = localStorage.getItem("modo");
+
+// ======================
+// CARREGAR ALUNO
+// ======================
+
 async function carregarAluno(){
 
 const docRef = doc(db,"alunos",id);
@@ -79,6 +85,9 @@ let html = `
 <strong>RA</strong><br>
 <input id="ra" value="${aluno.ra}">
 
+<strong>Data de aniversário</strong><br>
+<input type="date" id="aniversario" value="${aluno.aniversario || ""}">
+
 <strong>Série</strong>
 <div class="campoSerie">
 <input id="serieNumero" value="${aluno.serieNumero}">
@@ -95,8 +104,8 @@ let html = `
 
 <div class="linhaResponsavel">
 
-<input id="resp1" value="${aluno.resp1}">
-<input id="tel1" value="${aluno.tel1}" oninput="mascaraTelefone(this)" class="campoTelefone">
+<input id="resp1" value="${aluno.resp1 || ""}">
+<input id="tel1" value="${aluno.tel1 || ""}" oninput="mascaraTelefone(this)" class="campoTelefone">
 
 <img src="whatsapp.png"
 class="iconeWhats"
@@ -108,8 +117,8 @@ onclick="abrirWhatsapp(document.getElementById('tel1').value, document.getElemen
 
 <div class="linhaResponsavel">
 
-<input id="resp2" value="${aluno.resp2}">
-<input id="tel2" value="${aluno.tel2}" oninput="mascaraTelefone(this)" class="campoTelefone">
+<input id="resp2" value="${aluno.resp2 || ""}">
+<input id="tel2" value="${aluno.tel2 || ""}" oninput="mascaraTelefone(this)" class="campoTelefone">
 
 <img src="whatsapp.png"
 class="iconeWhats"
@@ -117,22 +126,47 @@ onclick="abrirWhatsapp(document.getElementById('tel2').value, document.getElemen
 
 </div>
 
-
-
 <br>
 
 <strong>Observações</strong><br>
-<textarea id="obs">${aluno.observacoes}</textarea>
+<textarea id="obs">${aluno.observacoes || ""}</textarea>
 
 `;
 
 document.getElementById("fichaAluno").innerHTML = html;
 
+// ======================
+// PERMISSÃO VISUALIZADOR
+// ======================
+
+if(modo !== "admin"){
+
+document.querySelectorAll("#fichaAluno input, #fichaAluno textarea").forEach(c=>{
+c.disabled = true;
+});
+
+const btnSalvar = document.querySelector(".btn-entrar");
+if(btnSalvar) btnSalvar.style.display="none";
+
+const btnExcluir = document.querySelector(".btnExcluir");
+if(btnExcluir) btnExcluir.style.display="none";
+
 }
 
 }
+
+}
+
+// ======================
+// SALVAR ALTERAÇÃO
+// ======================
 
 async function salvarAlteracao(){
+
+if(modo !== "admin"){
+alert("Apenas administradores podem alterar dados");
+return;
+}
 
 const docRef = doc(db,"alunos",id);
 
@@ -140,6 +174,7 @@ await updateDoc(docRef,{
 
 nome: document.getElementById("nome").value,
 ra: document.getElementById("ra").value,
+aniversario: document.getElementById("aniversario").value,
 
 serieNumero: document.getElementById("serieNumero").value,
 serieLetra: document.getElementById("serieLetra").value,
@@ -150,12 +185,6 @@ tel1: document.getElementById("tel1").value,
 resp2: document.getElementById("resp2").value,
 tel2: document.getElementById("tel2").value,
 
-resp3: document.getElementById("resp3").value,
-tel3: document.getElementById("tel3").value,
-
-resp4: document.getElementById("resp4").value,
-tel4: document.getElementById("tel4").value,
-
 observacoes: document.getElementById("obs").value
 
 });
@@ -164,7 +193,16 @@ alert("Alterações salvas");
 
 }
 
+// ======================
+// EXCLUIR ALUNO
+// ======================
+
 async function excluirAluno(){
+
+if(modo !== "admin"){
+alert("Apenas administradores podem excluir alunos");
+return;
+}
 
 if(confirm("Deseja excluir este aluno?")){
 
@@ -182,24 +220,6 @@ window.salvarAlteracao = salvarAlteracao;
 window.excluirAluno = excluirAluno;
 
 carregarAluno();
-
-/* CONTROLE DE PERMISSÃO */
-
-const modo = localStorage.getItem("modo");
-
-if(modo !== "admin"){
-
-document.querySelectorAll("input, textarea").forEach(campo=>{
-campo.disabled = true;
-});
-
-const btnSalvar = document.querySelector(".btn-entrar");
-if(btnSalvar) btnSalvar.style.display="none";
-
-const btnExcluir = document.querySelector(".btnExcluir");
-if(btnExcluir) btnExcluir.style.display="none";
-
-}
 
 </script>
 
@@ -229,7 +249,7 @@ alert("Telefone não cadastrado");
 return;
 }
 
-let mensagem = "Olá, aqui é da Escola Dinah de Moraes e Seixas, estamos entrando em contato sobre o Aluno(a) " + nome;
+let mensagem = "Olá, aqui é da Escola Dinah de Moraes e Seixas, estamos entrando em contato sobre o aluno(a) " + nome;
 
 mensagem = encodeURIComponent(mensagem);
 
