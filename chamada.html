@@ -45,13 +45,21 @@ background:#dcfce7;
 background:#fee2e2;
 }
 
+.justificadoLabel{
+font-size:12px;
+margin-left:10px;
+display:flex;
+align-items:center;
+gap:4px;
+}
+
 </style>
 
 </head>
 
 <body>
 
-    <script src="menu.js"></script>
+<script src="menu.js"></script>
 
 <div class="container">
 
@@ -63,30 +71,23 @@ background:#fee2e2;
 <h3>Turma</h3>
 
 <select id="serieNumero">
+<option value="">Todas</option>
+<option value="6">6º Ano</option>
+<option value="7">7º Ano</option>
+<option value="8">8º Ano</option>
+<option value="9">9º Ano</option>
+<option value="1">1º Médio</option>
+<option value="2">2º Médio</option>
+<option value="3">3º Médio</option>
+</select>
 
-    <option value="">Todas</option>
-    
-    <option value="6">6º Ano</option>
-    <option value="7">7º Ano</option>
-    <option value="8">8º Ano</option>
-    <option value="9">9º Ano</option>
-    
-    <option value="1">1º Médio</option>
-    <option value="2">2º Médio</option>
-    <option value="3">3º Médio</option>
-    
-    </select>
-    
-    <select id="serieLetra">
-    
-    <option value="">Turma</option>
-    
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-    <option value="E">E</option>
-
+<select id="serieLetra">
+<option value="">Turma</option>
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="E">E</option>
 </select>
 
 <br><br>
@@ -115,22 +116,19 @@ import {
 getFirestore,
 collection,
 getDocs,
-addDoc,
+writeBatch,
+doc,
 query,
-where,
-updateDoc,
-doc
+where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-
 apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
 authDomain: "alunos-escola-35433.firebaseapp.com",
 projectId: "alunos-escola-35433",
 storageBucket: "alunos-escola-35433.firebasestorage.app",
 messagingSenderId: "682522156619",
 appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
-
 };
 
 const app = initializeApp(firebaseConfig);
@@ -158,17 +156,12 @@ const alunosSnap = await getDocs(collection(db,"alunos"));
 
 let alunos = [];
 
-alunosSnap.forEach((doc)=>{
+alunosSnap.forEach((docSnap)=>{
 
-const aluno = doc.data();
+const aluno = docSnap.data();
 
 if(aluno.serieNumero == numero && aluno.serieLetra == letra){
-
-alunos.push({
-id: doc.id,
-...aluno
-});
-
+alunos.push({ id: docSnap.id, ...aluno });
 }
 
 });
@@ -178,6 +171,8 @@ alunos.sort((a,b)=> a.nome.localeCompare(b.nome));
 alunosTurma = alunos;
 chamada = {};
 registrosExistentes = {};
+
+/* BUSCA REGISTROS EXISTENTES */
 
 const q = query(
 collection(db,"presencas"),
@@ -189,14 +184,12 @@ where("data","==",data)
 const presencasSnap = await getDocs(q);
 
 presencasSnap.forEach((docSnap)=>{
-
 const p = docSnap.data();
 
 registrosExistentes[p.alunoId] = {
 docId: docSnap.id,
 status: p.status
 };
-
 });
 
 let html = "";
@@ -211,8 +204,9 @@ status = registrosExistentes[aluno.id].status;
 
 chamada[aluno.id] = status;
 
-let classe = status === "presente" ? "presente" : "falta";
-let texto = status === "presente" ? "Presente" : "Falta";
+let classe = status === "falta" ? "falta" : "presente";
+let texto = status === "falta" ? "Falta" : (status === "justificado" ? "Justificado" : "Presente");
+let checked = status === "justificado" ? "checked" : "";
 
 html += `
 <div class="listaAluno ${classe}" id="linha_${aluno.id}" onclick="marcar('${aluno.id}')">
@@ -221,8 +215,17 @@ html += `
 ${aluno.nome}
 </div>
 
+<div style="display:flex;align-items:center;gap:10px">
+
 <div class="status" id="status_${aluno.id}">
 ${texto}
+</div>
+
+<label class="justificadoLabel" onclick="event.stopPropagation()">
+<input type="checkbox" ${checked} onchange="toggleJustificado('${aluno.id}', this.checked)">
+J
+</label>
+
 </div>
 
 </div>
@@ -236,26 +239,49 @@ document.getElementById("lista").innerHTML = html;
 
 window.marcar = function(id){
 
-if(chamada[id] === "presente"){
-
-chamada[id] = "falta";
-
-const linha = document.getElementById("linha_"+id);
-linha.classList.remove("presente");
-linha.classList.add("falta");
-
-document.getElementById("status_"+id).innerText = "Falta";
-
-}else{
+if(chamada[id] === "falta"){
 
 chamada[id] = "presente";
 
+}else{
+
+chamada[id] = "falta";
+
+}
+
+atualizarLinha(id);
+
+}
+
+window.toggleJustificado = function(id, checked){
+
+if(checked){
+chamada[id] = "justificado";
+}else{
+chamada[id] = "presente";
+}
+
+atualizarLinha(id);
+
+}
+
+function atualizarLinha(id){
+
+const status = chamada[id];
+
 const linha = document.getElementById("linha_"+id);
-linha.classList.remove("falta");
+
+linha.classList.remove("presente","falta");
+
+if(status === "falta"){
+linha.classList.add("falta");
+document.getElementById("status_"+id).innerText = "Falta";
+}else if(status === "justificado"){
 linha.classList.add("presente");
-
+document.getElementById("status_"+id).innerText = "Justificado";
+}else{
+linha.classList.add("presente");
 document.getElementById("status_"+id).innerText = "Presente";
-
 }
 
 }
@@ -276,38 +302,40 @@ alert("Carregue a turma primeiro");
 return;
 }
 
+const batch = writeBatch(db);
+
 for(const aluno of alunosTurma){
 
 const status = chamada[aluno.id];
 
 if(registrosExistentes[aluno.id]){
 
-await updateDoc(
-doc(db,"presencas",registrosExistentes[aluno.id].docId),
-{status:status}
-);
+const ref = doc(db,"presencas",registrosExistentes[aluno.id].docId);
+
+batch.update(ref,{status});
 
 }else{
 
-await addDoc(collection(db,"presencas"),{
+const ref = doc(collection(db,"presencas"));
 
+batch.set(ref,{
 alunoId: aluno.id,
 nome: aluno.nome,
 serieNumero: numero,
 serieLetra: letra,
 data: data,
 status: status
-
 });
 
 }
 
 }
 
+await batch.commit();
+
 alert("Chamada salva com sucesso");
 
 document.getElementById("lista").innerHTML = "";
-
 document.getElementById("serieNumero").value = "";
 document.getElementById("serieLetra").value = "";
 

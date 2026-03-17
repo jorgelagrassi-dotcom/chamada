@@ -14,7 +14,7 @@
 
 <body>
 
-    <script src="menu.js"></script>
+<script src="menu.js"></script>
 
 <div class="container">
 
@@ -34,28 +34,28 @@ onkeyup="buscarPorNome()"
 <h3>Pesquisar por série</h3>
 <select id="serieNumero">
 
-    <option value="">Todas</option>
-    
-    <option value="6">6º Ano</option>
-    <option value="7">7º Ano</option>
-    <option value="8">8º Ano</option>
-    <option value="9">9º Ano</option>
-    
-    <option value="1">1º Médio</option>
-    <option value="2">2º Médio</option>
-    <option value="3">3º Médio</option>
-    
-    </select>
-    
-    <select id="serieLetra">
-    
-    <option value="">Turma</option>
-    
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-    <option value="E">E</option>
+<option value="">Todas</option>
+
+<option value="6">6º Ano</option>
+<option value="7">7º Ano</option>
+<option value="8">8º Ano</option>
+<option value="9">9º Ano</option>
+
+<option value="1">1º Médio</option>
+<option value="2">2º Médio</option>
+<option value="3">3º Médio</option>
+
+</select>
+
+<select id="serieLetra">
+
+<option value="">Turma</option>
+
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="E">E</option>
 
 </select>
 
@@ -105,7 +105,7 @@ if(aluno.nome.toLowerCase().includes(texto)){
 html += `
 <div class="impressaoCard">
 
-    <img src="${aluno.foto}">
+    <img src="${aluno.foto || 'semfoto.png'}">
 
     <div class="dadosAluno">
         <strong>${aluno.nome}</strong><br>
@@ -148,7 +148,7 @@ if(aluno.serieNumero == numero && aluno.serieLetra == letra){
 html += `
 <div class="impressaoCard">
 
-<img src="${aluno.foto}">
+<img src="${aluno.foto || 'semfoto.png'}">
 
 <div class="dadosAluno">
 
@@ -179,9 +179,7 @@ window.buscarPorNome = buscarPorNome;
 window.buscarPorSerie = buscarPorSerie;
 
 window.verFicha = function(id){
-
 window.location = "ficha.html?id=" + id;
-
 }
 
 </script>

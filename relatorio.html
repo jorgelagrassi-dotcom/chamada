@@ -12,132 +12,116 @@
 
 <style>
 
-    .tabela{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:4px;
-    font-size:10px;
-    }
-    
-    .tabela th,
-    .tabela td{
-    border:1px solid #d1d5db;
-    padding:2px;
-    text-align:center;
-    }
-    
-    .tabela th{
-    background:#f1f5f9;
-    }
-    
-    .nomeAluno{
-    text-align:left;
-    font-weight:bold;
-    font-size:10px;
-    }
-    
-    .presente{
-    color:#15803d;
-    font-weight:bold;
-    }
-    
-    .falta{
-    color:#b91c1c;
-    font-weight:bold;
-    }
-    
-    /* CABEÇALHO DO RELATÓRIO */
-    
-    #cabecalhoImpressao{
-    display:none;
-    text-align:center;
-    margin-bottom:6px;
-    line-height:1.2;
-    }
-    
-    #cabecalhoImpressao h2{
-    margin:0;
-    font-size:14px;
-    }
-    
-    #cabecalhoImpressao b{
-    font-size:11px;
-    }
-    
-    /* IMPRESSÃO */
-    
-    @media print{
-    
-    @page{
-    size: landscape;
-    margin:6mm;
-    }
-    
-    /* esconder elementos da tela */
-    
-    .navbar,
-    button,
-    select,
-    input,
-    h3,
-    label{
-    display:none;
-    }
-    
-    /* esconder título da página */
-    
-    h1{
-    display:none;
-    }
-    
-    /* mostrar cabeçalho do relatório */
-    
-    #cabecalhoImpressao{
-    display:block;
-    }
-    
-    /* container ocupa folha */
-    
-    .container{
-    width:100%;
-    margin:0;
-    padding:2px;
-    box-shadow:none;
-    }
-    
-    /* tabela compacta */
-    
-    .tabela{
-    font-size:9px;
-    }
-    
-    .tabela th,
-    .tabela td{
-    padding:2px;
-    }
-    
-    .nomeAluno{
-    font-size:9px;
-    }
-    
-    /* evitar quebra de aluno */
-    
-    table{
-    page-break-inside:auto;
-    }
-    
-    tr{
-    page-break-inside:avoid;
-    }
-    
-    .credito{
-    font-size:8px;
-    margin-top:6px;
-    }
-    
-    }
-    
-    </style>
+.tabela{
+width:100%;
+border-collapse:collapse;
+margin-top:4px;
+font-size:10px;
+}
+
+.tabela th,
+.tabela td{
+border:1px solid #d1d5db;
+padding:2px;
+text-align:center;
+}
+
+.tabela th{
+background:#f1f5f9;
+}
+
+.nomeAluno{
+text-align:left;
+font-weight:bold;
+font-size:10px;
+}
+
+.presente{
+color:#15803d;
+font-weight:bold;
+}
+
+.falta{
+color:#b91c1c;
+font-weight:bold;
+}
+
+#cabecalhoImpressao{
+display:none;
+text-align:center;
+margin-bottom:6px;
+line-height:1.2;
+}
+
+#cabecalhoImpressao h2{
+margin:0;
+font-size:14px;
+}
+
+#cabecalhoImpressao b{
+font-size:11px;
+}
+
+@media print{
+
+@page{
+size: landscape;
+margin:6mm;
+}
+
+.navbar,
+button,
+select,
+input,
+h3,
+label{
+display:none;
+}
+
+h1{
+display:none;
+}
+
+#cabecalhoImpressao{
+display:block;
+}
+
+.container{
+width:100%;
+margin:0;
+padding:2px;
+box-shadow:none;
+}
+
+.tabela{
+font-size:9px;
+}
+
+.tabela th,
+.tabela td{
+padding:2px;
+}
+
+.nomeAluno{
+font-size:9px;
+}
+
+table{
+page-break-inside:auto;
+}
+
+tr{
+page-break-inside:avoid;
+}
+
+.credito{
+font-size:8px;
+margin-top:6px;
+}
+
+}
+
+</style>
 
 </head>
 
@@ -152,30 +136,25 @@
 <h3>Série</h3>
 
 <select id="serieNumero">
-
-    <option value="">Todas</option>
-    
-    <option value="6">6º Ano</option>
-    <option value="7">7º Ano</option>
-    <option value="8">8º Ano</option>
-    <option value="9">9º Ano</option>
-    
-    <option value="1">1º Médio</option>
-    <option value="2">2º Médio</option>
-    <option value="3">3º Médio</option>
-    
-    </select>
-    
-    <select id="serieLetra">
-    
-    <option value="">Turma</option>
-    
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-    <option value="E">E</option>
+<option value="">Todas</option>
+<option value="6">6º Ano</option>
+<option value="7">7º Ano</option>
+<option value="8">8º Ano</option>
+<option value="9">9º Ano</option>
+<option value="1">1º Médio</option>
+<option value="2">2º Médio</option>
+<option value="3">3º Médio</option>
 </select>
+
+<select id="serieLetra">
+<option value="">Turma</option>
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+<option value="E">E</option>
+</select>
+
 <br><br>
 
 <h3>Período</h3>
@@ -197,7 +176,6 @@ Imprimir
 </button>
 
 <div id="cabecalhoImpressao"></div>
-
 <div id="tabelaRelatorio"></div>
 
 </div>
@@ -205,7 +183,7 @@ Imprimir
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
@@ -223,7 +201,6 @@ window.gerarRelatorio = async function(){
 
 const inicio = document.getElementById("dataInicio").value;
 const fim = document.getElementById("dataFim").value;
-
 const serieNumero = document.getElementById("serieNumero").value;
 const serieLetra = document.getElementById("serieLetra").value;
 
@@ -232,13 +209,28 @@ alert("Selecione o período");
 return;
 }
 
-const presencasSnap = await getDocs(collection(db,"presencas"));
+/* FILTRO FIREBASE (CORRIGIDO) */
+
+let q = query(
+collection(db,"presencas"),
+where("data",">=",inicio),
+where("data","<=",fim)
+);
+
+if(serieNumero){
+q = query(q, where("serieNumero","==",serieNumero));
+}
+
+if(serieLetra){
+q = query(q, where("serieLetra","==",serieLetra));
+}
+
+const presencasSnap = await getDocs(q);
 const alunosSnap = await getDocs(collection(db,"alunos"));
 
 let alunos = {};
 
 alunosSnap.forEach((doc)=>{
-
 const a = doc.data();
 
 if(serieNumero && a.serieNumero != serieNumero) return;
@@ -251,25 +243,26 @@ presencas:{}
 
 });
 
+/* DATAS SEM FIM DE SEMANA */
+
 let datas = [];
 
-/* CORREÇÃO DO ERRO DO DIA 28 */
-
-let partesInicio = inicio.split("-");
-let partesFim = fim.split("-");
-
-let dataAtual = new Date(partesInicio[0], partesInicio[1]-1, partesInicio[2]);
-let dataFinal = new Date(partesFim[0], partesFim[1]-1, partesFim[2]);
+let dataAtual = new Date(inicio);
+let dataFinal = new Date(fim);
 
 while(dataAtual <= dataFinal){
+
+let diaSemana = dataAtual.getDay();
+
+if(diaSemana !== 0 && diaSemana !== 6){
 
 let ano = dataAtual.getFullYear();
 let mes = String(dataAtual.getMonth()+1).padStart(2,'0');
 let dia = String(dataAtual.getDate()).padStart(2,'0');
 
-let d = `${ano}-${mes}-${dia}`;
+datas.push(`${ano}-${mes}-${dia}`);
 
-datas.push(d);
+}
 
 dataAtual.setDate(dataAtual.getDate()+1);
 
@@ -278,22 +271,14 @@ dataAtual.setDate(dataAtual.getDate()+1);
 /* PRESENÇAS */
 
 presencasSnap.forEach((doc)=>{
-
 const p = doc.data();
 
-if(p.data >= inicio && p.data <= fim){
-
 if(alunos[p.alunoId]){
-
 alunos[p.alunoId].presencas[p.data] = p.status;
-
 }
-
-}
-
 });
 
-/* CABEÇALHO PARA IMPRESSÃO */
+/* CABEÇALHO */
 
 let serieTexto = "Todas";
 
@@ -312,20 +297,13 @@ document.getElementById("cabecalhoImpressao").innerHTML = `
 
 let html = `<table class="tabela">`;
 
-html += `<tr>
-<th>Aluno</th>`;
+html += `<tr><th>Aluno</th>`;
 
 datas.forEach(d=>{
-
-const dia = d.split("-")[2];
-
-html += `<th>${dia}</th>`;
-
+html += `<th>${d.split("-")[2]}</th>`;
 });
 
-html += `<th>%</th>`;
-
-html += `</tr>`;
+html += `<th>%</th></tr>`;
 
 Object.values(alunos).forEach(aluno=>{
 
@@ -333,31 +311,24 @@ let faltas = 0;
 let total = datas.length;
 
 html += `<tr>`;
-
 html += `<td class="nomeAluno">${aluno.nome}</td>`;
 
 datas.forEach(d=>{
-
 let status = aluno.presencas[d];
 
 if(status === "falta"){
-
 faltas++;
-
 html += `<td class="falta">F</td>`;
-
+}else if(status === "justificado"){
+html += `<td class="presente">PJ</td>`;
 }else{
-
 html += `<td class="presente">P</td>`;
-
 }
-
 });
 
-let presenca = ((total - faltas) / total * 100).toFixed(0);
+let presenca = total > 0 ? ((total - faltas) / total * 100).toFixed(0) : 0;
 
 html += `<td>${presenca}%</td>`;
-
 html += `</tr>`;
 
 });

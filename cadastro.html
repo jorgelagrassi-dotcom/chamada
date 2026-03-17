@@ -26,7 +26,6 @@
 <br><br>
 
 <input id="nome" placeholder="Nome do aluno">
-
 <input id="ra" placeholder="RA">
 
 <h3>Data de aniversário</h3>
@@ -35,30 +34,23 @@
 <h3>Série</h3>
 
 <select id="serieNumero">
-
 <option value="">Ano</option>
-
 <option value="6">6º Ano</option>
 <option value="7">7º Ano</option>
 <option value="8">8º Ano</option>
 <option value="9">9º Ano</option>
-
 <option value="1">1º Médio</option>
 <option value="2">2º Médio</option>
 <option value="3">3º Médio</option>
-
 </select>
 
 <select id="serieLetra">
-
 <option value="">Turma</option>
-
 <option value="A">A</option>
 <option value="B">B</option>
 <option value="C">C</option>
 <option value="D">D</option>
 <option value="E">E</option>
-
 </select>
 
 <h3>Responsáveis</h3>
@@ -81,6 +73,7 @@ Salvar aluno
 
 </div>
 
+<!-- 🔥 SCRIPT DO FIREBASE -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -104,7 +97,7 @@ const modo = localStorage.getItem("modo");
 SALVAR ALUNO
 ========================= */
 
-window.salvarAluno = function(){
+window.salvarAluno = async function(){
 
 if(modo !== "admin"){
 alert("Apenas administradores podem cadastrar alunos");
@@ -113,11 +106,34 @@ return;
 
 const arquivo = document.getElementById("foto").files[0];
 
+const dadosBase = {
+
+nome: document.getElementById("nome").value.toUpperCase(),
+ra: document.getElementById("ra").value.toUpperCase(),
+aniversario: document.getElementById("aniversario").value,
+
+serieNumero: document.getElementById("serieNumero").value,
+serieLetra: document.getElementById("serieLetra").value,
+
+resp1: document.getElementById("resp1").value.toUpperCase(),
+tel1: document.getElementById("tel1").value,
+
+resp2: document.getElementById("resp2").value.toUpperCase(),
+tel2: document.getElementById("tel2").value,
+
+observacoes: document.getElementById("obs").value.toUpperCase()
+
+};
+
+/* SEM FOTO */
 if(!arquivo){
-alert("Selecione uma foto");
+await addDoc(collection(db,"alunos"),dadosBase);
+alert("Aluno cadastrado com sucesso");
+window.location = "pesquisa.html";
 return;
 }
 
+/* COM FOTO */
 const leitor = new FileReader();
 
 leitor.onload = function(event){
@@ -147,31 +163,12 @@ ctx.drawImage(img,0,0,largura,altura);
 
 const fotoBase64 = canvas.toDataURL("image/jpeg",0.7);
 
-const dados = {
-
-nome: document.getElementById("nome").value,
-ra: document.getElementById("ra").value,
-aniversario: document.getElementById("aniversario").value,
-
-serieNumero: document.getElementById("serieNumero").value,
-serieLetra: document.getElementById("serieLetra").value,
-
-resp1: document.getElementById("resp1").value,
-tel1: document.getElementById("tel1").value,
-
-resp2: document.getElementById("resp2").value,
-tel2: document.getElementById("tel2").value,
-
-observacoes: document.getElementById("obs").value,
-
+await addDoc(collection(db,"alunos"),{
+...dadosBase,
 foto: fotoBase64
-
-};
-
-await addDoc(collection(db,"alunos"),dados);
+});
 
 alert("Aluno cadastrado com sucesso");
-
 window.location = "pesquisa.html";
 
 }
@@ -184,11 +181,8 @@ leitor.readAsDataURL(arquivo);
 
 </script>
 
+<!-- 🔥 SCRIPT GLOBAL (RESOLVE A MÁSCARA) -->
 <script>
-
-/* =========================
-MÁSCARA TELEFONE
-========================= */
 
 function mascaraTelefone(input){
 
