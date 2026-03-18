@@ -74,7 +74,11 @@ let html = `
 <div class="layoutFicha">
 
 <div class="fotoAluno">
-    <img src="${aluno.foto || 'avatar.png'}" class="fotoFicha" onerror="this.src='avatar.png'">
+    <img id="previewFoto" src="${aluno.foto || 'avatar.png'}" class="fotoFicha" onerror="this.src='avatar.png'">
+
+    <br><br>
+
+    <input type="file" id="novaFoto" accept="image/*" onchange="previewImagem(event)">
 </div>
 
 <div class="dadosAluno">
@@ -135,21 +139,29 @@ onclick="abrirWhatsapp(document.getElementById('tel2').value, document.getElemen
 
 document.getElementById("fichaAluno").innerHTML = html;
 
-// ======================
-// PERMISSÃO VISUALIZADOR
-// ======================
+// 🔥 APLICAR MÁSCARA AUTOMÁTICA
+const tel1 = document.getElementById("tel1");
+const tel2 = document.getElementById("tel2");
 
+if(tel1){
+tel1.addEventListener("input", ()=>mascaraTelefone(tel1));
+mascaraTelefone(tel1);
+}
+
+if(tel2){
+tel2.addEventListener("input", ()=>mascaraTelefone(tel2));
+mascaraTelefone(tel2);
+}
+
+// BLOQUEIO VISUAL
 if(modo !== "admin"){
 
 document.querySelectorAll("#fichaAluno input, #fichaAluno textarea").forEach(c=>{
 c.disabled = true;
 });
 
-const btnSalvar = document.querySelector(".btn-entrar");
-if(btnSalvar) btnSalvar.style.display="none";
-
-const btnExcluir = document.querySelector(".btnExcluir");
-if(btnExcluir) btnExcluir.style.display="none";
+document.querySelector(".btn-entrar").style.display="none";
+document.querySelector(".btnExcluir").style.display="none";
 
 }
 
@@ -158,7 +170,7 @@ if(btnExcluir) btnExcluir.style.display="none";
 }
 
 // ======================
-// SALVAR ALTERAÇÃO
+// SALVAR ALTERAÇÃO (COM FOTO)
 // ======================
 
 async function salvarAlteracao(){
@@ -169,6 +181,10 @@ return;
 }
 
 const docRef = doc(db,"alunos",id);
+const arquivo = document.getElementById("novaFoto").files[0];
+
+// 🔥 SE NÃO TROCOU FOTO
+if(!arquivo){
 
 await updateDoc(docRef,{
 
@@ -190,11 +206,72 @@ observacoes: document.getElementById("obs").value
 });
 
 alert("Alterações salvas");
+return;
+}
+
+// 🔥 COM FOTO NOVA
+const leitor = new FileReader();
+
+leitor.onload = function(event){
+
+const img = new Image();
+img.src = event.target.result;
+
+img.onload = async function(){
+
+const canvas = document.createElement("canvas");
+const ctx = canvas.getContext("2d");
+
+const larguraMax = 600;
+
+let largura = img.width;
+let altura = img.height;
+
+if(largura > larguraMax){
+altura = altura * (larguraMax / largura);
+largura = larguraMax;
+}
+
+canvas.width = largura;
+canvas.height = altura;
+
+ctx.drawImage(img,0,0,largura,altura);
+
+const fotoBase64 = canvas.toDataURL("image/jpeg",0.7);
+
+await updateDoc(docRef,{
+
+nome: document.getElementById("nome").value,
+ra: document.getElementById("ra").value,
+aniversario: document.getElementById("aniversario").value,
+
+serieNumero: document.getElementById("serieNumero").value,
+serieLetra: document.getElementById("serieLetra").value,
+
+resp1: document.getElementById("resp1").value,
+tel1: document.getElementById("tel1").value,
+
+resp2: document.getElementById("resp2").value,
+tel2: document.getElementById("tel2").value,
+
+observacoes: document.getElementById("obs").value,
+
+foto: fotoBase64
+
+});
+
+alert("Foto atualizada com sucesso");
+
+}
+
+}
+
+leitor.readAsDataURL(arquivo);
 
 }
 
 // ======================
-// EXCLUIR ALUNO
+// EXCLUIR
 // ======================
 
 async function excluirAluno(){
@@ -224,6 +301,14 @@ carregarAluno();
 </script>
 
 <script>
+
+function previewImagem(event){
+const reader = new FileReader();
+reader.onload = function(){
+document.getElementById("previewFoto").src = reader.result;
+}
+reader.readAsDataURL(event.target.files[0]);
+}
 
 function mascaraTelefone(input){
 
