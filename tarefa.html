@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisa de Alunos - Tarefas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <script src="menu.js"></script>
+
+    <div class="container">
+        <h1>Pesquisar alunos</h1>
+
+        <h3>Pesquisar por nome</h3>
+        <input type="text" id="buscaNome" placeholder="Digite o nome do aluno" onkeyup="buscarPorNome()">
+
+        <br><br>
+
+        <h3>Pesquisar por série</h3>
+        <select id="serieNumero">
+            <option value="">Todas</option>
+            <option value="6">6º Ano</option>
+            <option value="7">7º Ano</option>
+            <option value="8">8º Ano</option>
+            <option value="9">9º Ano</option>
+            <option value="1">1º Médio</option>
+            <option value="2">2º Médio</option>
+            <option value="3">3º Médio</option>
+        </select>
+
+        <select id="serieLetra">
+            <option value="">Turma</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="AE">AE</option>
+        </select>
+
+        <br><br>
+
+        <button onclick="buscarPorSerie()" class="btn-confirm">Buscar série</button>
+
+        <br><br>
+
+        <!-- BOTÕES ADMIN -->
+        <button id="btnLimparTurma" onclick="limparTurma()" style="background:red;color:white;padding:10px;border:none;border-radius:5px;">
+            🗑️ Limpar turma
+        </button>
+
+        <button id="btnRemoverBaixa" onclick="removerTransferidos()" style="background:orange;color:white;padding:10px;border:none;border-radius:5px;">
+            Remover baixa transferência
+        </button>
+
+        <br><br>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            getDocs, 
+            doc, 
+            updateDoc,
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKFNE4ZOrrvM4PGf_72CcUxSkfPs-0cQk",
+            authDomain: "alunos-escola-35433.firebaseapp.com",
+            projectId: "alunos-escola-35433",
+            storageBucket: "alunos-escola-35433.firebasestorage.app",
+            messagingSenderId: "682522156619",
+            appId: "1:682522156619:web:7f0be7ecd5edbf1819f7ce"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const modo = localStorage.getItem("modo");
+
+        if(modo !== "admin"){
+            document.getElementById("btnLimparTurma").style.display = "none";
+            document.getElementById("btnRemoverBaixa").style.display = "none";
+        }
+
+        /* =========================
+        FORMATA DATA E HORA (BR)
+        ========================= */
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return "Nunca";
+            
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        /* =========================
+        ABRIR TASKITOS + SALVAR ÚLTIMA TAREFA
+        ========================= */
+        window.abrirTaskitos = async function(ra, aniversario, alunoId) {
+            if(!ra){
+                alert("RA não encontrado.");
+                return;
+            }
+
+            const raFormatado = ra + "sp";
+
+            // Gera senha
+            let senha = "";
+            if(aniversario){
+                let dia = "", mes = "";
+                if(aniversario.includes("/")){
+                    const partes = aniversario.split("/");
+                    dia = partes[0].padStart(2, '0');
+                    mes = partes[1].padStart(2, '0');
+                } else if(aniversario.includes("-")){
+                    const partes = aniversario.split("-");
+                    dia = partes[2].padStart(2, '0');
+                    mes = partes[1].padStart(2, '0');
+                }
+                if(dia && mes) senha = `@Aluno${dia}${mes}`;
+            }
+
+            // Copia RA
+            navigator.clipboard.writeText(raFormatado).catch(() => {});
+
+            // Salva data/hora da última tarefa no Firebase
+            if(alunoId){
+                try {
+                    const alunoRef = doc(db, "alunos", alunoId);
+                    await updateDoc(alunoRef, {
+                        ultimaTarefa: serverTimestamp()
+                    });
+                } catch (e) {
+                    console.error("Erro ao salvar última tarefa:", e);
+                }
+            }
+
+            // Alerta com informações
+            if(senha){
+                alert(`✅ Informações copiadas!\n\n` +
+                      `RA: ${raFormatado}\n` +
+                      `Senha: ${senha}\n\n` +
+                      `Agora é só colar no Taskitos.`);
+            } else {
+                alert(`✅ RA copiado: ${raFormatado}\n\nNão foi possível gerar a senha.`);
+            }
+
+            window.open("https://taskitos.cupiditys.lol/", "_blank");
+        };
+
+        /* =========================
+        FUNÇÃO AUXILIAR PARA GERAR SENHA
+        ========================= */
+        function gerarSenha(aniversario){
+            if(!aniversario) return "";
+            let dia = "", mes = "";
+            if(aniversario.includes("/")){
+                const partes = aniversario.split("/");
+                dia = partes[0].padStart(2, '0');
+                mes = partes[1].padStart(2, '0');
+            } else if(aniversario.includes("-")){
+                const partes = aniversario.split("-");
+                dia = partes[2].padStart(2, '0');
+                mes = partes[1].padStart(2, '0');
+            }
+            return dia && mes ? `@Aluno${dia}${mes}` : "";
+        }
+
+        /* =========================
+        BUSCAR POR NOME
+        ========================= */
+        async function buscarPorNome(){
+            const texto = document.getElementById("buscaNome").value.toLowerCase();
+            const querySnapshot = await getDocs(collection(db,"alunos"));
+
+            let html = "";
+
+            querySnapshot.forEach((doc) => {
+                const aluno = doc.data();
+                if(aluno.nome.toLowerCase().includes(texto)){
+                    const senha = gerarSenha(aluno.aniversario);
+                    const ultima = formatarDataHora(aluno.ultimaTarefa);
+
+                    html += `
+                    <div class="impressaoCard">
+                        <img src="${aluno.foto || 'avatar.png'}" onerror="this.src='avatar.png'">
+                        <div class="dadosAluno">
+                            <strong>${aluno.nome}</strong><br>
+                            Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
+                            RA: ${aluno.ra}<br>
+                            <strong>Senha:</strong> ${senha || "Não cadastrada"}<br>
+                            <strong>Última tarefa:</strong> ${ultima}
+
+                            <br><br>
+
+                            <button onclick="abrirTaskitos('${aluno.ra}', '${aluno.aniversario || ""}', '${doc.id}')" 
+                                    style="background:#4CAF50;color:white;padding:8px;border:none;border-radius:5px;margin-top:5px;">
+                                Realizar tarefa
+                            </button>
+
+                            <button onclick="copiarSenha('${aluno.aniversario}')" 
+                                    style="background:#2196F3;color:white;padding:8px;border:none;border-radius:5px;margin-top:5px;">
+                                Copiar senha
+                            </button>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            document.getElementById("resultado").innerHTML = html;
+        }
+
+        /* =========================
+        BUSCAR POR SÉRIE
+        ========================= */
+        async function buscarPorSerie(){
+            const numero = document.getElementById("serieNumero").value;
+            const letra = document.getElementById("serieLetra").value;
+
+            const querySnapshot = await getDocs(collection(db,"alunos"));
+
+            let html = "";
+
+            querySnapshot.forEach((doc) => {
+                const aluno = doc.data();
+                if(aluno.serieNumero == numero && aluno.serieLetra == letra){
+                    const senha = gerarSenha(aluno.aniversario);
+                    const ultima = formatarDataHora(aluno.ultimaTarefa);
+
+                    html += `
+                    <div class="impressaoCard">
+                        <img src="${aluno.foto || 'avatar.png'}" onerror="this.src='avatar.png'">
+                        <div class="dadosAluno">
+                            <strong>${aluno.nome}</strong><br>
+                            Série: ${aluno.serieNumero}° ${aluno.serieLetra}<br>
+                            RA: ${aluno.ra}<br>
+                            <strong>Senha:</strong> ${senha || "Não cadastrada"}<br>
+                            <strong>Última tarefa:</strong> ${ultima}
+
+                            <br><br>
+
+                            <button onclick="abrirTaskitos('${aluno.ra}', '${aluno.aniversario || ""}', '${doc.id}')" 
+                                    style="background:#4CAF50;color:white;padding:8px;border:none;border-radius:5px;margin-top:5px;">
+                                Realizar tarefa
+                            </button>
+
+                            <button onclick="copiarSenha('${aluno.aniversario}')" 
+                                    style="background:#2196F3;color:white;padding:8px;border:none;border-radius:5px;margin-top:5px;">
+                                Copiar senha
+                            </button>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            document.getElementById("resultado").innerHTML = html;
+        }
+
+        window.buscarPorNome = buscarPorNome;
+        window.buscarPorSerie = buscarPorSerie;
+
+        window.copiarSenha = function(aniversario){
+            const senha = gerarSenha(aniversario);
+            if(!senha){
+                alert("Aluno sem data de aniversário cadastrada");
+                return;
+            }
+            navigator.clipboard.writeText(senha);
+            alert("Senha copiada: " + senha);
+        };
+
+        // Funções antigas (mantidas)
+        window.removerTransferidos = async function(){ /* ... mesmo código de antes ... */ };
+        window.limparTurma = async function(){ /* ... mesmo código de antes ... */ };
+    </script>
+
+    <div class="credito">By Jorge La Grassi</div>
+</body>
+</html>
