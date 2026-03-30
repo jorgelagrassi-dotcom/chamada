@@ -37,6 +37,10 @@ Chamada
 Busca ativa
 </button>
 
+<button class="btnAdmin" onclick="window.location='tarefa.html'">
+ADM
+</button>
+
 <button onclick="sair()">
 Sair
 </button>
